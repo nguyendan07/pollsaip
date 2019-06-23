@@ -11,5 +11,7 @@ pipenv shell
 **Running project**
 ```
 ./manage.py migrate
+./manage.py loaddata dev_data.json
 ./manage.py runserver
 ```
+*Open in your browser and login to /admin with admin/123456a@*
