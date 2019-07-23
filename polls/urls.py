@@ -1,9 +1,10 @@
 from django.urls import path
 
-from . import views
+from . import apiviews
 
 
 urlpatterns = [
-    path('', views.index, name='index'),
-    path('<int:pk>/', views.detail, name='detail')
+    # api
+    path('', apiviews.QuestionList.as_view(), name='question_list'),
+    path('<int:pk>/', apiviews.QuestionDetail.as_view(), name='question_detail')
 ]
