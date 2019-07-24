@@ -1,23 +1,30 @@
-from rest_framework import generics
+from rest_framework import generics, status, viewsets
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from .models import Question, Choice
 from .serializers import QuestionSerializer, ChoiceSerializer, VoteSerializer
 
 
-class QuestionList(generics.ListCreateAPIView):
-    queryset = Question.objects.all()
-    serializer_class = QuestionSerializer
-
-
-class QuestionDetail(generics.RetrieveDestroyAPIView):
+class QuestionViewSet(viewsets.ModelViewSet):
     queryset = Question.objects.all()
     serializer_class = QuestionSerializer
 
 
 class ChoiceList(generics.ListCreateAPIView):
-    queryset = Choice.objects.all()
+    def get_queryset(self):
+        queryset = Choice.objects.filter(question_id=self.kwargs['pk'])
+        return queryset
     serializer_class = ChoiceSerializer
 
 
-class CreateVote(generics.CreateAPIView):
-    serializer_class = VoteSerializer
+class CreateVote(APIView):
+    def post(self, request, pk, choice_pk):
+        voted_by = request.data.get('voted_by')
+        data = {'choice': choice_pk, 'question': pk, 'voted_by': voted_by}
+        serializer = VoteSerializer(data=data)
+        if serializer.is_valid():
+            vote = serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
