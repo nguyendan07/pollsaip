@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import Question, Choice
-from .serializers import QuestionSerializer, ChoiceSerializer, VoteSerializer
+from .serializers import QuestionSerializer, ChoiceSerializer, VoteSerializer, UserSerializer
 
 
 class QuestionViewSet(viewsets.ModelViewSet):
@@ -28,3 +28,9 @@ class CreateVote(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CreateUser(generics.CreateAPIView):
+    authentication_classes = ()
+    permission_classes = ()
+    serializer_class = UserSerializer
