@@ -1,21 +1,49 @@
+from django.contrib.auth import authenticate
 from rest_framework import generics, status, viewsets
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.exceptions import PermissionDenied
 
 from .models import Question, Choice
 from .serializers import QuestionSerializer, ChoiceSerializer, VoteSerializer, UserSerializer
+
+
+class LoginView(APIView):
+    permission_classes = ()
+
+    def post(self, request):
+        username = request.data.get('username')
+        password = request.data.get('password')
+        user = authenticate(username=username, password=password)
+        if user:
+            return Response({'token': user.auth_token.key})
+        else:
+            return Response({'error': 'Wrong Credentials'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class QuestionViewSet(viewsets.ModelViewSet):
     queryset = Question.objects.all()
     serializer_class = QuestionSerializer
 
+    def destroy(self, request, *args, **kwargs):
+        question = Question.objects.get(pk=kwargs['pk'])
+        if not request.user == question.created_by:
+            raise PermissionDenied("You can not delete this question.")
+        return super().destroy(request, *args, **kwargs)
+
 
 class ChoiceList(generics.ListCreateAPIView):
+    serializer_class = ChoiceSerializer
+
     def get_queryset(self):
         queryset = Choice.objects.filter(question_id=self.kwargs['pk'])
         return queryset
-    serializer_class = ChoiceSerializer
+    
+    def post(self, request, *args, **kwargs):
+        question = Question.objects.get(pk=kwargs['pk'])
+        if not request.user == question.created_by:
+            raise PermissionDenied("You can not create choice for this question.")
+        return super().post(request, *args, **kwargs)
 
 
 class CreateVote(APIView):
@@ -31,6 +59,4 @@ class CreateVote(APIView):
 
 
 class CreateUser(generics.CreateAPIView):
-    authentication_classes = ()
-    permission_classes = ()
     serializer_class = UserSerializer
